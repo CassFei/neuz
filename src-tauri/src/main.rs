@@ -263,7 +263,7 @@ async fn create_window(profile_id: String, app_handle: tauri::AppHandle) {
         ::new(
             &app_handle,
             "client",
-            tauri::WindowUrl::External("https://universe.flyff.com/play".parse().unwrap())
+            tauri::WindowUrl::External("https://ffcli.ruiwoo.cn".parse().unwrap())
         )
         .data_directory(
             PathBuf::from(
