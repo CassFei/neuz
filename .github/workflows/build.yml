@@ -1,34 +1,33 @@
-name: 'Push testing build'
+name: Pure Windows Build
 on:
   push:
-    branches:
-      - "**"
-env:
-  CI: false
+    branches: [ "main", "master" ]
+  workflow_dispatch: # 允许你在 Actions 页面手动点击按钮触发
 
 jobs:
-  publish-tauri:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
-
-    runs-on: ${{ matrix.platform }}
+  build-windows:
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - name: setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+
+      - name: install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-      - name: install app dependencies and build it
-        run: yarn && yarn build
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm install -g yarn
+          yarn install
+
+      - name: build tauri app
+        run: yarn tauri build --bundles none
+
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-private-neuz
+          path: src-tauri/target/release/
