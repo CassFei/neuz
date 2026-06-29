@@ -2,7 +2,7 @@ name: Pure Windows Build
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # 允许你在 Actions 页面手动点击按钮触发
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -18,13 +18,14 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: install dependencies
-        run: |
-          npm install -g yarn
-          yarn install
-
-      - name: build tauri app
-        run: yarn tauri build --bundles none
+      # 使用官方 Tauri 核心编译插件（它会自动分析并运行正确的打包命令）
+      - name: Build Tauri App via Official Action
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # 我们只需要单独编译，不需要生成打包安装包，这样速度极快且极少出错
+          args: --bundles none
 
       - name: Upload Windows EXE
         uses: actions/upload-artifact@v4
