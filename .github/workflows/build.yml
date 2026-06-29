@@ -1,34 +1,43 @@
-name: Pure Windows Build
+# 经过修改：移除了 macOS/Ubuntu，改为只保留 Windows 平台编译，并修改了触发条件以便直接运行
+name: "PR build release (Windows Only)"
 on:
   push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # 允许你在 Actions 页面手动点击按钮触发
+
+env:
+  CI: false
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  publish-tauri:
+    permissions:
+      contents: write
+    runs-on: windows-latest # 删除了 matrix 矩阵，直接锁定 Windows 环境
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 20
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      # 使用官方 Tauri 核心编译插件（它会自动分析并运行正确的打包命令）
-      - name: Build Tauri App via Official Action
-        uses: tauri-apps/tauri-action@v0
+      # 已删除原作者针对 ubuntu 安装依赖的步骤
+
+      - name: install app dependencies and build it
+        run: yarn && yarn build
+
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # 我们只需要单独编译，不需要生成打包安装包，这样速度极快且极少出错
-          args: --bundles none
-
-      - name: Upload Windows EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: my-private-neuz
-          path: src-tauri/target/release/
+          tagName: Neuz-v__VERSION__ # 这里会自动读取你 package.json 里的版本号
+          releaseName: "Neuz v__VERSION__"
+          releaseBody: "Join us on Discord and leave a ⭐ on GitHub if you like the project!"
+          releaseDraft: true # 注意：这里原作者设置的是生成一个“草稿”，打包成功后需要去 Release 页面点发布
+          prerelease: false
+          latest: true
